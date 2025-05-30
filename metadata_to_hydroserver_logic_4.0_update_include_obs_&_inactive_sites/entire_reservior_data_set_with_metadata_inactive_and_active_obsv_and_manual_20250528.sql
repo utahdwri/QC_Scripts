@@ -1,0 +1,87 @@
+SELECT  
+    LTRIM(RTRIM([COLLECTION_SYSTEM])) AS COLLECTION_SYSTEM,
+    LTRIM(RTRIM([collection_sys_description])) AS collection_sys_description,
+    [STATION_MASTER].[STATION_ID] AS MasterStationID,
+    LTRIM(RTRIM([STATION_MASTER].[STATION_NAME])) AS MasterStationName,
+    LTRIM(RTRIM([COLLECTION_STATIONS].[STATION_NAME])) AS CollectionStationName,
+    LTRIM(RTRIM([COMMENTS])) AS COMMENTS,
+    LTRIM(RTRIM([SiteType])) AS SiteType,
+    LTRIM(RTRIM([ANALOG_CHANNEL])) AS ANALOG_CHANNEL,
+    [STATION_MASTER].[STATION_ID],
+    LTRIM(RTRIM([SYSTEM_NAME])) AS SYSTEM_NAME,
+    LTRIM(RTRIM([DatasetType])) AS DatasetType,
+    LTRIM(RTRIM([MEASURING_DEVICE])) AS MEASURING_DEVICE,
+    LTRIM(RTRIM([DEVICE_TYPE])) AS DEVICE_TYPE,
+    LTRIM(RTRIM([STATUS])) AS STATUS,
+    [LAT],
+    [LON],
+    LTRIM(RTRIM([DataEntryMethod])) AS DataEntryMethod,
+    LTRIM(RTRIM([Telemetry])) AS Telemetry,
+    CONCAT('https://waterrights.utah.gov/cgi-bin/dvrtview.exe?Modinfo=StationView&STATION_ID=', [STATION_MASTER].[STATION_ID]) AS StationPage,
+
+    -- New columns from UNITS_MASTER
+    [UNITS_MASTER].[UNITS_ID],
+    LTRIM(RTRIM([UNITS_MASTER].[RECORD_TYPE])) AS RECORD_TYPE,
+    LTRIM(RTRIM([UNITS_MASTER].[UNITS_DESC_BASE])) AS UNITS_DESC_BASE,
+    LTRIM(RTRIM([UNITS_MASTER].[UNITS_DESC_ENTRY])) AS UNITS_DESC_ENTRY,
+    [UNITS_MASTER].[UNITS_MULTIPLIER],
+    LTRIM(RTRIM([UNITS_MASTER].[UNITS_DESC_REALTIME])) AS UNITS_DESC_REALTIME,
+
+    COUNT([RECORD_YEAR]) AS NoOfYears, 
+    MIN([RECORD_YEAR]) AS StartYr, 
+    MAX([RECORD_YEAR]) AS EndYr
+
+FROM [dvrtDB].[dbo].[STATION_MASTER]
+
+LEFT JOIN [dvrtDB].[dbo].[COLLECTION_SYSTEMS] 
+    ON [COLLECTION_SYSTEMS].[collection_sys_id] = [STATION_MASTER].[STATION_ID]
+
+LEFT JOIN [dvrtDB].[dbo].[COLLECTION_STATIONS] 
+    ON [STATION_MASTER].[CAPTURE_SEQ_NO] = [COLLECTION_STATIONS].[SEQ_NO]
+
+JOIN [dvrtDB].[dbo].[UNITS_MASTER] 
+    ON [STATION_MASTER].[UNITS_ID] = [UNITS_MASTER].[UNITS_ID]
+
+LEFT JOIN [dvrtDB].[dbo].[DAILY_RECORDS] 
+    ON [STATION_MASTER].[STATION_ID] = [DAILY_RECORDS].[STATION_ID]
+
+WHERE 
+    -- [STATUS] = 'A' 
+    [DatasetType] = 'Observational'
+    -- AND [DataEntryMethod] != 'Manual' 
+    -- AND [DataEntryMethod] IS NOT NULL
+   -- ([LAT] IS NOT NULL OR [LON] IS NOT NULL)  
+    -- AND ([LON] > '-115' OR [LON] < '36') 
+    -- AND [LAT] > 0
+    AND (
+        [STATION_MASTER].[STATION_NAME] LIKE '%Reservoir%' OR 
+        [COLLECTION_STATIONS].[STATION_NAME] LIKE '%Reservoir%'
+    )
+	--AND SiteType != 'Reservoir' and SiteType!='Reservoir Release' 
+	-- AND  [STATION_MASTER].[STATION_NAME] LIKE '%ECHO%'
+GROUP BY
+    [COLLECTION_SYSTEM],
+    [collection_sys_description],
+    [STATION_MASTER].[STATION_ID],
+    [STATION_MASTER].[STATION_NAME],
+    [COLLECTION_STATIONS].[STATION_NAME],
+    [COMMENTS],
+    [SiteType],
+    [ANALOG_CHANNEL],
+    [SYSTEM_NAME],
+    [DatasetType],
+    [MEASURING_DEVICE],
+    [DEVICE_TYPE],
+    [STATUS],
+    [LAT],
+    [LON],
+    [DataEntryMethod],
+    [Telemetry],
+    [UNITS_MASTER].[UNITS_ID],
+    [UNITS_MASTER].[RECORD_TYPE],
+    [UNITS_MASTER].[UNITS_DESC_BASE],
+    [UNITS_MASTER].[UNITS_DESC_ENTRY],
+    [UNITS_MASTER].[UNITS_MULTIPLIER],
+    [UNITS_MASTER].[UNITS_DESC_REALTIME]
+
+ORDER BY [STATION_MASTER].[STATION_ID] ASC;
